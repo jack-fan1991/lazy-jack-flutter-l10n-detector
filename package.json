@@ -1,0 +1,173 @@
+{
+  "name": "flutter-l10n-detector",
+  "displayName": "Lazy Locale Detector – Flutter l10n Assistant",
+  "description": "Scan your Flutter project for hard-coded strings and auto-generate l10n files effortlessly.",
+  "version": "0.0.2",
+  "publisher": "jackFan",
+  "icon": "images/logo-removebg.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "flutter",
+    "i18n",
+    "localization",
+    "l10n",
+    "lazyjack"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:dart",
+    "onCommand:dartL10n.ignoreFile",
+    "onCommand:dartL10n.showTagFilter",
+    "onCommand:dartL10n.clean.items",
+    "onCommand:dartL10n.refresh",
+    "onCommand:dartL10n.filterDir",
+    "onCommand:dartL10n.disable"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Lazy Locale Detector – Flutter l10n Assistant",
+      "properties": {
+        "flutter-l10n-detector.localizations": {
+          "type": "object",
+          "default": {
+            "className": "AppLocalizations",
+            "localizationsPath": "package:flutter_gen/gen_l10n/app_localizations.dart"
+          },
+          "properties": {
+            "className": {
+              "type": "string",
+              "description": "The class name for the Flutter localization delegate (e.g., AppLocalizations)."
+            },
+            "localizationsPath": {
+              "type": "string",
+              "description": "The import path for the Flutter localization delegate (e.g., package:flutter_gen/gen_l10n/app_localizations.dart)."
+            },
+            "outputPath": {
+              "type": "string",
+              "description": "The output path for the generated localization extension file (e.g., lib/app/localization_extension.dart).",
+              "default": "lib/app/localization_extension.dart"
+            }
+          },
+          "description": "Configuration for Flutter localization extension template."
+        }
+      }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "dartL10nFixViewAllFiles",
+          "name": "Flutter L10n Overview",
+          "icon": "images/logo.png"
+        },
+        {
+          "id": "dartL10nFixView",
+          "name": "Flutter L10n Detector",
+          "icon": "images/logo.png"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "dartL10n.ignoreFile",
+        "title": "ignore",
+        "icon": "$(circle-slash)"
+      },
+      {
+        "command": "dartL10n.showTagFilter",
+        "title": "Filter",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "dartL10n.clean.items",
+        "title": "Clear ignored items",
+        "icon": "$(x)"
+      },
+      {
+        "command": "dartL10n.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dartL10n.filterDir",
+        "title": "Search directory",
+        "icon": "$(search)"
+      },
+      {
+        "command": "dartL10n.disable",
+        "title": "Disable L10n Detector",
+        "icon": "$(circle-slash)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "dartL10n.showTagFilter",
+          "when": "view == dartL10nFixView",
+          "group": "navigation"
+        },
+        {
+          "command": "dartL10n.clean.items",
+          "when": "view == dartL10nFixViewAllFiles",
+          "group": "navigation"
+        },
+        {
+          "command": "dartL10n.refresh",
+          "when": "view == dartL10nFixViewAllFiles",
+          "group": "navigation"
+        },
+        {
+          "command": "dartL10n.filterDir",
+          "when": "view == dartL10nFixViewAllFiles",
+          "group": "navigation"
+        },
+        {
+          "command": "dartL10n.disable",
+          "when": "view == dartL10nFixViewAllFiles",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "dartL10n.ignoreFile",
+          "when": "viewItem == dartFileItem",
+          "group": "inline"
+        }
+      ],
+      "explorer/context": []
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "exclude": [
+    "node_modules",
+    ".vscode"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jack-fan1991/lazy-jack-flutter-l10n-detector"
+  },
+  "dependencies": {
+    "@types/node": "^18.15.11",
+    "@types/vscode": "^1.77.0",
+    "axios": "^1.3.2",
+    "change-case": "^4.1.2",
+    "cheerio": "^1.0.0-rc.12",
+    "iconv-lite": "^0.6.3",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.19",
+    "vsce": "^2.15.0",
+    "yaml": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.5",
+    "@types/lodash": "^4.14.194"
+  },
+  "type": "commonjs"
+}
