@@ -16,7 +16,7 @@
 ### 2. 字串重構 (Quick Fix)
 
 * **CodeLens 快速修復**：在偵測到的字串上方顯示 `🔧 Fix「...」to l10n` 按鈕，點擊即可開始重構。
-* **Code Action 支援**：也可選取字串（包含引號），使用快捷鍵 (`Ctrl` + `.`) 呼叫 `🌐 Export String to l10n resource`。
+* **Code Action 支援**：也可選取字串（不包含引號），使用快捷鍵 (`Ctrl` + `.`) 呼叫 `🌐 Export String to l10n resource`。
 * **鍵值建議**：自動偵測字串所在的**類別 (Class)** 或**檔案名稱**，並將其轉換為 snake_case 格式（例如 `my_widget_title`）作為建議的 l10n 鍵值。
 * **參數自動偵測**：
     * 能自動識別字串中的變數（例如 `"Hello $name"` 或 `"Total: ${count}"`）。
