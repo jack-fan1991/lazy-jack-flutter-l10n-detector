@@ -2,7 +2,7 @@
   "name": "flutter-l10n-detector",
   "displayName": "Lazy Locale Detector – Flutter l10n Assistant",
   "description": "Scan your Flutter project for hard-coded strings and auto-generate l10n files effortlessly.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "jackFan",
   "icon": "images/logo-removebg.png",
   "engines": {
