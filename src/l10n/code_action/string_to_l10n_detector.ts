@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import path = require('path');
 import * as fs from 'fs';
+import * as crypto from 'crypto';
 // let counter = new OpenCloseFinder()
 import * as changeCase from "change-case";
 import { EzCodeActionProviderInterface } from './code_action';
@@ -140,6 +141,34 @@ function detectParameters(text: string): string[] {
     return Array.from(params);
 }
 
+/**
+ * 依選取字串產生固定長度的快速選單鍵名片段
+ * @param text 選取字串
+ * @returns 最長 37 字元的鍵名片段
+ */
+function generateQuickPickSelectionKey(text: string): string {
+
+    const normalized = changeCase.snakeCase(text ?? '');
+    if (normalized.length<30) {
+        return normalized;
+    }
+    const segments = normalized.split('_').filter(Boolean).slice(0, 4);
+    let base = segments.join('_');
+
+    if (base.length === 0) {
+        base = normalized.slice(0, 30).replace(/_+$/, '');
+        if (base.length > 0 && base.length <= 30) {
+            return base;
+        }
+    }
+    if (base.length > 30) {
+        base = base.slice(0, 30);
+    }
+    base = base.replace(/_+$/, '');
+    const hashSource = text ?? normalized;
+    const hashSuffix = crypto.createHash('md5').update(hashSource).digest('hex').slice(0, 6);
+    return base ? `${base}_${hashSuffix}` : hashSuffix;
+}
 
 /**
  * 將帶參數的字串轉換為 Flutter 多國語言範本
@@ -239,41 +268,44 @@ async function l18nFix() {
     let firstFilePath = path.join(targetPath, firstKey);
     // 彈出選單或輸入框讓使用者選擇 key
     let totalContent = getActivateText()
-    let classMatch = getAllClassNames(totalContent).filter(e => e !== undefined && !e.includes(nearestClassName));
-    let quickPickItems: vscode.QuickPickItem[] = [
+    let classMatch = getAllClassNames(totalContent).filter(e => e !== undefined);
+    const tempQuickPickItems: vscode.QuickPickItem[] = [
         { label: "✨ Enter custom key...", description: "Enter a custom key for l10n" },
         ...(nearestClassName ? [nearestClassNameOption] : []), // 最近 class 名稱
-        ...new Set(
-            classMatch.filter((key) => {
-                changeCase.snakeCase(key) != changeCase.snakeCase(fileName!.replace(".dart", "")) ||
-                    changeCase.snakeCase(key) != changeCase.snakeCase(nearestClassName)
-            })
-                .map(key => {
-                    // 處理 description: 使用 snake_case 並移除 "_widget"（如果存在）
-                    let description = changeCase.snakeCase(key);
+        ...classMatch.map(key => {
+            // 處理 description: 使用 snake_case 並移除 "_widget"（如果存在）
+            let description = changeCase.snakeCase(key);
 
-                    if (description.endsWith("_widget")) {
-                        description = description.replace("_widget", "");
-                    }
+            if (description.endsWith("_widget")) {
+                description = description.replace("_widget", "");
+            }
 
-                    return { label: `[Class] ${key}`, description: `🔑 ${description}` };
-                })
-        ), // 所有已存在的 key
+            return { label: `[Class] ${key}`, description: `🔑 ${description}` };
+        }), // 所有已存在的 key
         ...(fileName ? [fileNameOption] : [])
     ];
-    let selectText = getSelectedText()
 
-    selectText = changeCase.snakeCase(selectText)
+    const seen = new Set<string>();
+    let quickPickItems: vscode.QuickPickItem[] = tempQuickPickItems.filter(item => {
+        if (item.description) {
+            if (seen.has(item.description)) {
+                return false;
+            }
+            seen.add(item.description);
+        }
+        return true;
+    });
+    const selectedTextRaw = getSelectedText() ?? '';
+    const selectionKeyFragment = generateQuickPickSelectionKey(selectedTextRaw);
     const quickPickItemsResult: vscode.QuickPickItem[] = quickPickItems.map(item => {
         if (item.label.includes("✨ Enter custom key...") || !item.description) {
             return item;
         }
-        // Always suggest a key with the selected text appended.
-        // The user can edit it in the input box later.
+        // 預設提供附帶選取片段的鍵名，使用者可在輸入框調整
         const baseKey = item.description.replace('🔑 ', '');
         return {
             label: item.label,
-            description: `🔑 ${baseKey}_${selectText}`
+            detail: `🔑 ${baseKey}_${selectionKeyFragment}`
         };
     });
 
@@ -283,9 +315,9 @@ async function l18nFix() {
     let outputKey = "";
     if (selectedKey.label.includes("✨ Enter custom key...")) {
         outputKey = "";
-    } else if (selectedKey.description) {
+    } else if (selectedKey.detail) {
         // Use the description directly as it contains the full suggested key.
-        outputKey = selectedKey.description.replace('🔑 ', '');
+        outputKey = selectedKey.detail.replace('🔑 ', '');
     }
 
     // 彈出輸入框讓使用者輸入 key
