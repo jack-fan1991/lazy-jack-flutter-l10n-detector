@@ -1,3 +1,8 @@
-# 0.0.4
+# 0.0.6
+- Feature:[Flutter L10n Detector] Added a Localization Editor to manage all .arb files in a single view.
 
-- 強化多國語系快選鍵名建議，限制長度並附加雜湊避免碰撞
+# 0.0.5
+- Update README: Added English instructions.
+
+# 0.0.4
+- Improved localization quick key-name suggestions: limited length and appended a hash to avoid collisions.

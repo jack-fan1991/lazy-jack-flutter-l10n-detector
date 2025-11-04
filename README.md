@@ -1,76 +1,92 @@
-# Flutter L10n 助手 (Flutter L10n Detector)
+# Flutter L10n Assistant (Flutter L10n Detector)
 
-## 核心功能
+[English](README.md) | [繁體中文](README.zh-TW.md)
 
-* 簡化 Flutter 的 (l10n) 工作流程您**偵測**並 **重構**專案中的字串
+## Key Features
+
+* Streamlines the Flutter l10n workflow by **detecting** and **refactoring** hardcoded strings.
 ![功能預覽](images/scan.png)
 
-### 1. 專案全域掃描 (Flutter L10n Overview)
+### 1. Project-Wide Scan (Flutter L10n Overview)
 
-* **全專案字串偵測**：提供一個側邊欄視圖，掃描您的 `lib` 資料夾，列出所有包含硬編碼 (hardcoded) 字串的 Dart 檔案。
-* **自訂掃描範圍**：
-    * **過濾目錄 (`dartL10n.filterDir`)**：可讓您將掃描範圍縮小到特定的子目錄（例如 `lib/features/profile`），專注於單一功能。
-    * **忽略檔案/目錄 (`dartL10n.ignoreFile`)**：可從掃描清單中暫時或永久移除特定檔案或整個資料夾。
-* **一鍵跳轉**：點擊清單中的檔案，會自動開啟並跳轉到該字串所在的位置。
+* **Global string detection**: Adds a sidebar view that scans your `lib` folder and lists every Dart file containing hardcoded strings.
+* **Custom scan scope**:
+    * **Filter directories (`dartL10n.filterDir`)**: Limit the scan to specific subdirectories (for example `lib/features/profile`) to focus on a single feature.
+    * **Ignore files or folders (`dartL10n.ignoreFile`)**: Temporarily or permanently exclude files or directories from the scan results.
+* **One-click navigation**: Select any item to open the file and jump directly to the detected string.
 
-### 2. 字串重構 (Quick Fix)
+### 2. String Refactoring (Quick Fix)
 
-* **CodeLens 快速修復**：在偵測到的字串上方顯示 `🔧 Fix「...」to l10n` 按鈕，點擊即可開始重構。
-* **Code Action 支援**：也可選取字串（不包含引號），使用快捷鍵 (`Ctrl` + `.`) 呼叫 `🌐 Export String to l10n resource`。
-* **鍵值建議**：自動偵測字串所在的**類別 (Class)** 或**檔案名稱**，並將其轉換為 snake_case 格式（例如 `my_widget_title`）作為建議的 l10n 鍵值。
-* **參數自動偵測**：
-    * 能自動識別字串中的變數（例如 `"Hello $name"` 或 `"Total: ${count}"`）。
-    * 若偵測到參數，會彈出選單讓您選擇參數類型（`String` 或 `num`）。
-    * 自動在 `.arb` 檔案中生成對應的 `placeholders` 區塊。
-* **自動程式碼替換**：
-    * 將 `"My String"` 替換為 `context.l10n.my_string`。
-    * 將 `"Hello $name"` 替換為 `context.l10n.hello_name(name)`。
-* **`context.l10n` 輔助程式**：
-    * 自動檢查並生成 `localization_extension.dart` 檔案，讓您能方便地使用 `context.l10n` getter。
-    * 自動在 Dart 檔案頂部添加所需的 import 語句。
+* **CodeLens quick fix**: Shows a `🔧 Fix「...」to l10n` button above each detected string; click to start refactoring.
+* **Code Action support**: Select a string (without quotes) and trigger `🌐 Export String to l10n resource` with `Ctrl + .`.
+* **Key suggestions**: Automatically detects the surrounding **class** or **file name**, converts it to snake_case (for example `my_widget_title`), and suggests it as the l10n key.
+* **Parameter detection**:
+    * Recognizes variables inside strings (for example `"Hello $name"` or `"Total: ${count}"`).
+    * Prompts for parameter types (`String` or `num`) whenever a variable is found.
+    * Generates the `placeholders` section in `.arb` files automatically.
+* **Automatic code replacement**:
+    * Replaces `"My String"` with `context.l10n.my_string`.
+    * Replaces `"Hello $name"` with `context.l10n.hello_name(name)`.
+* **`context.l10n` helper**:
+    * Checks for and creates `localization_extension.dart` so the `context.l10n` getter is always available.
+    * Adds required import statements to the top of the Dart file.
 
-### 3. `.arb` 檔案自動管理
+### 3. `.arb` File Automation
 
-* **儲存時自動排序**：當您儲存 `.arb` 檔案時，擴充功能會自動驗證 JSON 格式，並依特定規則排序：
-    1.  `appName` (如果存在)
-    2.  其他沒有 `@` 對應的一般鍵值 (按字母排序)
-    3.  成對的 `key` 與 `@key` (按字母排序)
-* **自動執行 `flutter gen-l10n`**：
-    * 當您透過重構加入新的 l10n 鍵值時。
-    * 當您手動儲存 `.arb` 檔案時。
-    * 擴充功能會自動在終端機執行 `flutter gen-l10n`，確保您的 `AppLocalizations.dart` 始終保持最新。
+* **Auto-sort on save**: Validates JSON and sorts entries whenever you save an `.arb` file:
+    1.  `appName` (if present)
+    2.  All keys without matching `@` metadata (alphabetical)
+    3.  Each `key` with its `@key` pair (alphabetical)
+* **Automatic `flutter gen-l10n` runs**:
+    * Whenever a new l10n key is created through refactoring.
+    * Whenever an `.arb` file is saved manually.
+    * Executes `flutter gen-l10n` in the terminal to keep `AppLocalizations.dart` up to date.
 
-### 4. 當前檔案分析 (Flutter L10n Detector)
+### 4. Active File Analysis (Flutter L10n Detector)
 
-* **即時分析視圖**：提供另一個側邊欄視圖，專注於**當前開啟**的 Dart 檔案。
-* **字串分類標籤**：將當前檔案中的字串分類為：
-    * `[Fix]`：建議進行 l10n 重構的字串。
-    * `[Log]`：`log(...)` 或 `Logger(...)` 中的字串。
-    * `[Print]`：`print(...)` 中的字串。
-    * `[Other]`：被識別為常數、路由路徑 (`/`)、`Key()` 或 `DateFormat()` 的字串。
-* **標籤過濾**：您可以在此視圖中快速過濾，例如只顯示 `[Fix]` 標籤的字串。
+* **Real-time analysis view**: Adds another sidebar view dedicated to the **currently open** Dart file.
+* **String categorization**:
+    * `[Fix]`: Strings that should be refactored to l10n resources.
+    * `[Log]`: Strings inside `log(...)` or `Logger(...)`.
+    * `[Print]`: Strings inside `print(...)`.
+    * `[Other]`: Strings recognized as constants, route paths (`/`), `Key()`, or `DateFormat()`.
+* **Tag filters**: Quickly filter the list, for example to show only `[Fix]` items.
 
-## 如何使用 (建議工作流程)
+### 5. Localization Editor
 
-1.  在 VS Code 側邊欄打開「**Flutter L10n Overview**」視圖。
-2.  點擊右上角的「Refresh」圖示 (`dartL10n.refresh`) 掃描您的專案。
-3.  視圖中會列出所有包含硬編碼字串的檔案。
-4.  點擊任一檔案，編輯器將開啟並跳轉到該字串。
-5.  點擊字串上方的 `🔧 Fix to l10n` CodeLens，或選取字串後按 `Ctrl + .`。
-6.  選擇 `🌐 Export String to l10n resource`。
-7.  從建議清單中選擇一個鍵值前綴（例如 `[Class] MyWidget` 或 `[File] my_widget`），或選擇自訂輸入。
-8.  在輸入框中確認最終的 l10n 鍵值 (例如 `my_widget_title`)。
-9.  如果偵測到參數 (如 `$name`)，請為其選擇類型 (`String` / `num`)。
-10. **完成！** 擴充功能將會：
-    * 自動更新 `lib/l10n/` 目錄下的所有 `.arb` 檔案。
-    * 自動排序 `.arb` 檔案內容。
-    * 將您的 Dart 程式碼替換為 `context.l10n.my_widget_title`。
-    * 自動添加 `localization_extension.dart` 的 import。
-    * 在背景執行 `flutter gen-l10n`。
+* **Unified editing view**: Provides a webview editor to manage all `.arb` files in one place.
+* **Two display modes**:
+    * **Combined View**: Displays all languages side-by-side in a single table for easy comparison.
+    * **Tabbed View**: Shows translations for one language at a time, simplifying focused editing.
+* **Advanced filtering**:
+    * **Filter by key or value**: Quickly find specific translations.
+    * **Placeholder-only filter**: Isolate entries that contain variables.
+* **Dynamic placeholder management**:
+    * Automatically detects placeholders (e.g., `{name}`).
+    * Allows editing placeholder types (e.g., `String`, `num`).
+* **Auto-save and hot reload**: Saves all changes to the corresponding `.arb` files and triggers a hot reload.
 
-## 擴充功能設定 (Configuration)
+## Recommended Workflow
 
-您可以在 `.vscode/settings.json` 中自訂以下設定：
+1.  Open the **Flutter L10n Overview** view in the VS Code sidebar.
+2.  Click the **Refresh** button (`dartL10n.refresh`) to scan your project.
+3.  Review the list of files that contain hardcoded strings.
+4.  Pick a file to open it at the detected string.
+5.  Use the `🔧 Fix to l10n` CodeLens button or select the string and press `Ctrl + .`.
+6.  Choose `🌐 Export String to l10n resource`.
+7.  Pick a suggested key prefix (for example `[Class] MyWidget` or `[File] my_widget`) or enter a custom one.
+8.  Confirm the final l10n key (for example `my_widget_title`).
+9.  If parameters are detected (such as `$name`), select their types (`String` / `num`).
+10. You're done! The extension will:
+    * Update all `.arb` files under `lib/l10n/`.
+    * Sort entries inside the `.arb` files.
+    * Replace your Dart code with `context.l10n.my_widget_title`.
+    * Add the import for `localization_extension.dart`.
+    * Run `flutter gen-l10n` in the background.
+
+## Extension Configuration
+
+Configure the extension through `.vscode/settings.json`:
 
 * l10m.yaml
 ```yaml
@@ -84,9 +100,9 @@ output-dir: lib/l10n/gen
 ```json
 {
   "flutter-l10n-detector.localizations": {
-    "className": "AppLocalizations", // 您的 AppLocalizations 類別名稱
-    "localizationsPath":  "lib/l10n/gen", // AppLocalizations 的 import 路徑
-    "outputPath": "lib/l10n/gen" // context.l10n 輔助檔案的生成路徑
+    "className": "AppLocalizations",
+    "localizationsPath":  "lib/l10n/gen",
+    "outputPath": "lib/l10n/gen"
   }
 }
 ```
