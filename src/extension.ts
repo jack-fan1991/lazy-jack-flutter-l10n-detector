@@ -11,6 +11,7 @@ import { StringToL10nDetector } from './l10n/code_action/string_to_l10n_detector
 import { FileListenerBase } from './utils/base_file_listener';
 import { commonStartFileListener, commonStopFileListener } from './command';
 import { arbFileListener } from './l10n/arb_file_listener';
+import { registerLocalizationEditorCommand } from './l10n/editor/register_localization_editor';
 
 
 
@@ -43,6 +44,7 @@ registerFileListener(context)
     registerDartL10nStringFix(context)
     registerDartL10nStringTreeProvider(context)
     registerDartL10nOverViewTreeProvider(context)
+    registerLocalizationEditorCommand(context)
 
 }
 
