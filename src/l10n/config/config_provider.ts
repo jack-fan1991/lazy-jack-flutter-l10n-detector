@@ -8,6 +8,8 @@ export interface LocalizationExtensionConfig {
     localizationsPath: string;
     outputPath: string;
     projectName: string;
+    accessorPrefix: string;
+    accessorImport: string;
 }
 
 export interface FlutterL10nDetectorConfig {
@@ -33,6 +35,8 @@ export function loadConfig(): FlutterL10nDetectorConfig {
 
     let outputPath = config.get<string>('localizations.outputPath') ?? 'lib/app/localization_extension.dart';
     let localizationsPath = config.get<string>('localizations.localizationsPath') ?? 'package:flutter_gen/gen_l10n/app_localizations.dart';
+    const accessorPrefixRaw = (config.get<string>('localizations.accessorPrefix') ?? 'context.l10n').trim();
+    const accessorImportRaw = (config.get<string>('localizations.accessorImport') ?? '').trim();
 
     if (!outputPath.endsWith('.dart')) {
         if (!outputPath.endsWith('/')) {
@@ -59,9 +63,31 @@ export function loadConfig(): FlutterL10nDetectorConfig {
         localizationsPath: localizationsPath,
         outputPath: outputPath,
         projectName: projectName,
+        accessorPrefix: accessorPrefixRaw.length > 0 ? accessorPrefixRaw : 'context.l10n',
+        accessorImport: normalizeImportPath(accessorImportRaw, projectName),
     };
 
     return {
         localizationExtension: localizationExtensionConfig,
     };
+}
+
+function normalizeImportPath(importPath: string, projectName: string): string {
+    if (!importPath) {
+        return '';
+    }
+    const trimmed = importPath.trim();
+    if (
+        trimmed.startsWith('package:') ||
+        trimmed.startsWith('dart:') ||
+        trimmed.startsWith('/') ||
+        trimmed.startsWith('./') ||
+        trimmed.startsWith('../')
+    ) {
+        return trimmed;
+    }
+    if (trimmed.startsWith('lib/')) {
+        return `package:${projectName}/${trimmed.replace(/^lib\//, '')}`;
+    }
+    return trimmed;
 }

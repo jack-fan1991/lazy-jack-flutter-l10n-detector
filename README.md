@@ -106,3 +106,17 @@ output-dir: lib/l10n/gen
   }
 }
 ```
+
+If your project exposes a static accessor, override the default `context.l10n`
+prefix and import with the following configuration:
+
+```json
+{
+  "flutter-l10n-detector.localizations": {
+    "localizationsPath": "lib/l10n/gen",
+    "outputPath": "lib/l10n/gen",
+    "accessorPrefix": "App.l10n",
+    "accessorImport": "lib/main.dart"
+  }
+}
+```

@@ -104,3 +104,16 @@ output-dir: lib/l10n/gen
   }
 }
 ```
+
+若您的專案已提供靜態的 `AppLocalizations` 存取子，可透過下列設定覆寫預設的 `context.l10n` 前綴與匯入來源：
+
+```json
+{
+  "flutter-l10n-detector.localizations": {
+    "localizationsPath": "lib/l10n/gen",
+    "outputPath": "lib/l10n/gen",
+    "accessorPrefix": "App.l10n",
+    "accessorImport": "lib/main.dart"
+  }
+}
+```

@@ -2,7 +2,7 @@
   "name": "flutter-l10n-detector",
   "displayName": "Lazy Locale Detector – Flutter l10n Assistant",
   "description": "Scan your Flutter project for hard-coded strings and auto-generate l10n files effortlessly.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "jackFan",
   "icon": "images/logo-removebg.png",
   "engines": {
@@ -37,7 +37,9 @@
           "type": "object",
           "default": {
             "className": "AppLocalizations",
-            "localizationsPath": "package:flutter_gen/gen_l10n/app_localizations.dart"
+            "localizationsPath": "package:flutter_gen/gen_l10n/app_localizations.dart",
+            "accessorPrefix": null,
+            "accessorImport": null
           },
           "properties": {
             "className": {
@@ -52,6 +54,16 @@
               "type": "string",
               "description": "The output path for the generated localization extension file (e.g., lib/app/localization_extension.dart).",
               "default": "lib/app/localization_extension.dart"
+            },
+            "accessorPrefix": {
+              "type": "string",
+              "description": "Custom accessor prefix for generated localization references (e.g., App.l10n).",
+              "default": null
+            },
+            "accessorImport": {
+              "type": "string",
+              "description": "Custom import path when using a non-default localization accessor.",
+              "default": null
             }
           },
           "description": "Configuration for Flutter localization extension template."

@@ -215,25 +215,38 @@ async function processL10nWithParams(text: string, key: string): Promise<{ [key:
 }
 async function l18nFix() {
     const config = loadConfig();
-    const { className, localizationsPath, outputPath, projectName } = config.localizationExtension;
+    const {
+        className,
+        localizationsPath,
+        outputPath,
+        projectName,
+        accessorPrefix,
+        accessorImport
+    } = config.localizationExtension;
 
     const rootPath = getRootPath();
     if (!rootPath) {
         vscode.window.showErrorMessage('Could not determine workspace root path.');
         return;
     }
-    const fullOutputPath = path.join(rootPath, outputPath);
-    const outputDir = path.dirname(fullOutputPath);
+    const effectiveAccessorPrefix = accessorPrefix.trim().length > 0 ? accessorPrefix.trim() : 'context.l10n';
+    const accessorPrefixWithDot = effectiveAccessorPrefix.endsWith('.') ? effectiveAccessorPrefix : `${effectiveAccessorPrefix}.`;
+    const isDefaultAccessor = effectiveAccessorPrefix === 'context.l10n';
 
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-    }
+    if (isDefaultAccessor) {
+        const fullOutputPath = path.join(rootPath, outputPath);
+        const outputDir = path.dirname(fullOutputPath);
 
-    if (!fs.existsSync(fullOutputPath)) {
-        const importPath = `package:${projectName}/${localizationsPath.replace('lib/', '')}`;
-        const fileContent = generateLocalizationExtensionContent(className, importPath);
-        fs.writeFileSync(fullOutputPath, fileContent, 'utf8');
-        vscode.window.showInformationMessage(`Generated localization extension file at: ${outputPath}`);
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        if (!fs.existsSync(fullOutputPath)) {
+            const importPath = `package:${projectName}/${localizationsPath.replace('lib/', '')}`;
+            const fileContent = generateLocalizationExtensionContent(className, importPath);
+            fs.writeFileSync(fullOutputPath, fileContent, 'utf8');
+            vscode.window.showInformationMessage(`Generated localization extension file at: ${outputPath}`);
+        }
     }
 
     let text = getSelectedText();
@@ -359,7 +372,8 @@ async function l18nFix() {
 
     let l10nObject = await processL10nWithParams(text, key as string);
     if (l10nObject == undefined) return
-    let newText = ""
+    const keyAccessExpression = `${accessorPrefixWithDot}${key as string}`;
+    let newText = "";
     if (Object.keys(l10nObject).length === 0) {
         // 將選取的文字作為 value，並將 key-value 加入每個 .arb 檔案的末端
         files.forEach(file => {
@@ -370,8 +384,9 @@ async function l18nFix() {
             let jsonString = JSON.stringify(sortedObject, null, 2);
             fs.writeFileSync(filePath, jsonString, 'utf8');
         });
-        newText = `context.l10n.${key as string}`
+        newText = keyAccessExpression;
     } else {
+        const paramsList = detectParameters(text).join(",");
         // 將選取的文字作為 value，並將 key-value 加入每個 .arb 檔案的末端
         files.forEach(file => {
             let filePath = path.join(targetPath, file);
@@ -382,18 +397,30 @@ async function l18nFix() {
             });
             let sortedObject = sortArbKeysObject(content);
             let jsonString = JSON.stringify(sortedObject, null, 2);
-            let params = detectParameters(text).join(",");
 
             fs.writeFileSync(filePath, jsonString, 'utf8');
-            newText = `context.l10n.${key as string}(${params})`
         });
+        newText = `${keyAccessExpression}(${paramsList})`;
     }
 
-    const importStatement = `import 'package:${projectName}/${outputPath.replace('lib/', '')}';`;
     const currentFileContent = editor.document.getText();
-    if (!currentFileContent.includes(outputPath)) {
-        editor.edit(editBuilder => {
-            editBuilder.insert(new vscode.Position(0, 0), importStatement + '\n');
+    const importStatements: string[] = [];
+    if (isDefaultAccessor) {
+        const extensionImportPath = `package:${projectName}/${outputPath.replace(/^lib\//, '')}`;
+        const extensionImportStatement = `import '${extensionImportPath}';`;
+        if (!currentFileContent.includes(extensionImportPath)) {
+            importStatements.push(extensionImportStatement);
+        }
+    } else if (accessorImport.trim().length > 0) {
+        const accessorImportStatement = `import '${accessorImport.trim()}';`;
+        if (!currentFileContent.includes(accessorImport.trim())) {
+            importStatements.push(accessorImportStatement);
+        }
+    }
+    if (importStatements.length > 0) {
+        await editor.edit(editBuilder => {
+            const insertion = importStatements.map(statement => `${statement}\n`).join('');
+            editBuilder.insert(new vscode.Position(0, 0), insertion);
         });
         await editor.document.save(); // Save after inserting import
     }
