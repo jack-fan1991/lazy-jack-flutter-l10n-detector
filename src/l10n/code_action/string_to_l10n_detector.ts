@@ -252,76 +252,104 @@ async function l18nFix() {
 
     // 向前搜尋最近的 class 名稱
     let nearestClassName = findNearestClassName(fullText, position);
-    nearestClassName = nearestClassName
-    let nearestClassDescription = changeCase.snakeCase(nearestClassName)
+    let nearestClassDescription = nearestClassName ? changeCase.snakeCase(nearestClassName) : '';
     if (nearestClassDescription.endsWith("_widget")) {
         nearestClassDescription = nearestClassDescription.replace("_widget", "")
     }
-    let nearestClassNameOption = { label: `[Class] ${nearestClassName}`, description: `🔑 ${nearestClassDescription}` }
-
-    let fileNameDescription = changeCase.snakeCase(fileName!.replace(".dart", ""))
-    if (fileNameDescription.endsWith("_widget")) {
-        fileNameDescription = fileNameDescription.replace("_widget", "")
+    let fileNameDescription = '';
+    if (fileName) {
+        fileNameDescription = changeCase.snakeCase(fileName.replace(".dart", ""));
+        if (fileNameDescription.endsWith("_widget")) {
+            fileNameDescription = fileNameDescription.replace("_widget", "");
+        }
     }
-    let fileNameOption = { label: `[File] ${fileName!}`, description: `🔑 ${fileNameDescription}` }
+    type L10nKeySource = {
+        baseKey: string;
+        description: string;
+    };
+
+    const nearestClassSource: L10nKeySource | undefined = nearestClassName ? {
+        baseKey: nearestClassDescription,
+        description: `Source: nearest class ${nearestClassName}`
+    } : undefined;
+
     let firstKey = files[0];
     let firstFilePath = path.join(targetPath, firstKey);
     // 彈出選單或輸入框讓使用者選擇 key
     let totalContent = getActivateText()
     let classMatch = getAllClassNames(totalContent).filter(e => e !== undefined);
-    const tempQuickPickItems: vscode.QuickPickItem[] = [
-        { label: "✨ Enter custom key...", description: "Enter a custom key for l10n" },
-        ...(nearestClassName ? [nearestClassNameOption] : []), // 最近 class 名稱
-        ...classMatch.map(key => {
-            // 處理 description: 使用 snake_case 並移除 "_widget"（如果存在）
-            let description = changeCase.snakeCase(key);
-
-            if (description.endsWith("_widget")) {
-                description = description.replace("_widget", "");
-            }
-
-            return { label: `[Class] ${key}`, description: `🔑 ${description}` };
-        }), // 所有已存在的 key
-        ...(fileName ? [fileNameOption] : [])
-    ];
-
-    const seen = new Set<string>();
-    let quickPickItems: vscode.QuickPickItem[] = tempQuickPickItems.filter(item => {
-        if (item.description) {
-            if (seen.has(item.description)) {
-                return false;
-            }
-            seen.add(item.description);
+    const classSources: L10nKeySource[] = classMatch.map(key => {
+        let baseKey = changeCase.snakeCase(key);
+        if (baseKey.endsWith("_widget")) {
+            baseKey = baseKey.replace("_widget", "");
         }
+        return {
+            baseKey,
+            description: `Source: class ${key}`
+        };
+    }).filter(source => source.baseKey.length > 0);
+
+    const fileSource: L10nKeySource | undefined = fileName && fileNameDescription ? {
+        baseKey: fileNameDescription,
+        description: `Source: file ${fileName}`
+    } : undefined;
+
+    const candidateSources = [
+        nearestClassSource,
+        ...classSources,
+        fileSource
+    ].filter((source): source is L10nKeySource => !!source && source.baseKey.length > 0);
+
+    const seenBaseKeys = new Set<string>();
+    const uniqueSources = candidateSources.filter(source => {
+        if (seenBaseKeys.has(source.baseKey)) {
+            return false;
+        }
+        seenBaseKeys.add(source.baseKey);
         return true;
     });
+
     const selectedTextRaw = getSelectedText() ?? '';
     const selectionKeyFragment = generateQuickPickSelectionKey(selectedTextRaw);
-    const quickPickItemsResult: vscode.QuickPickItem[] = quickPickItems.map(item => {
-        if (item.label.includes("✨ Enter custom key...") || !item.description) {
-            return item;
+    const buildSuggestedKey = (baseKey: string): string => {
+        if (!baseKey && !selectionKeyFragment) {
+            return '';
         }
-        // 預設提供附帶選取片段的鍵名，使用者可在輸入框調整
-        const baseKey = item.description.replace('🔑 ', '');
-        return {
-            label: item.label,
-            detail: `🔑 ${baseKey}_${selectionKeyFragment}`
-        };
-    });
+        if (!baseKey) {
+            return selectionKeyFragment;
+        }
+        if (!selectionKeyFragment) {
+            return baseKey;
+        }
+        return `${baseKey}_${selectionKeyFragment}`;
+    };
 
-    let selectedKey = await vscode.window.showQuickPick(quickPickItemsResult, { placeHolder: "Select l10n key or Custom." });
+    const quickPickItemsResult: vscode.QuickPickItem[] = [
+        {
+            label: '✨ Custom key...',
+            description: 'Enter a custom localization key'
+        },
+        ...uniqueSources.map(source => {
+            const suggestedKey = buildSuggestedKey(source.baseKey);
+            return {
+                label: suggestedKey,
+                description: source.description
+            };
+        })
+    ].filter(item => item.label.trim().length > 0);
+
+    let selectedKey = await vscode.window.showQuickPick(quickPickItemsResult, { placeHolder: "Select or customize localization key" });
     if (selectedKey == undefined) return
 
     let outputKey = "";
-    if (selectedKey.label.includes("✨ Enter custom key...")) {
+    if (selectedKey.label.startsWith("✨")) {
         outputKey = "";
-    } else if (selectedKey.detail) {
-        // Use the description directly as it contains the full suggested key.
-        outputKey = selectedKey.detail.replace('🔑 ', '');
+    } else {
+        outputKey = selectedKey.label;
     }
 
     // 彈出輸入框讓使用者輸入 key
-    let key = await vscode.window.showInputBox({ prompt: 'Enter the key for l10n', value: outputKey });
+    let key = await vscode.window.showInputBox({ prompt: 'Enter localization key', value: outputKey });
     if (!key) {
         return undefined;
     }
