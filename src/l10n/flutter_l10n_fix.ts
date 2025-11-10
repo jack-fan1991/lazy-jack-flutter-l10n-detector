@@ -6,8 +6,8 @@ import { command_flutter_l10n_fix } from '../command';
 
 export class DartL10nCodeLensProvider implements vscode.CodeLensProvider {
     static enable: boolean = false;
-
-    onDidChangeCodeLenses?: vscode.Event<void> | undefined;
+    private _onDidChangeCodeLensesEmitter = new vscode.EventEmitter<void>();
+    readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLensesEmitter.event;
     provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] {
         if (!DartL10nCodeLensProvider.enable) return [];
         const codeLenses: vscode.CodeLens[] = [];
@@ -51,6 +51,10 @@ export class DartL10nCodeLensProvider implements vscode.CodeLensProvider {
     private isTranslated(text: string): boolean {
         return text.includes(".l10n")
     }
+
+    refreshCodeLenses() {
+        this._onDidChangeCodeLensesEmitter.fire();
+    }
 }
 
 // vscode.commands.registerCommand('dart-i18n.fixString', (uri: vscode.Uri, range: vscode.Range, original: string) => {
@@ -68,4 +72,3 @@ export function registerDartL10nStringFix(context: vscode.ExtensionContext) {
     );
 }
 export const dartL10nCodeLensProvider = new DartL10nCodeLensProvider()
-

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { DartL10nCodeLensProvider } from './flutter_l10n_fix';
+import { DartL10nCodeLensProvider, dartL10nCodeLensProvider } from './flutter_l10n_fix';
 import { showInfo } from '../utils/logger/logger';
 
 
@@ -38,12 +38,14 @@ export class DartFileTreeProvider implements vscode.TreeDataProvider<DartFileIte
             showInfo("Enable l10n helper")
         }
         DartL10nCodeLensProvider.enable = true
+        dartL10nCodeLensProvider.refreshCodeLenses();
         this.scanDartFiles();
         this._onDidChangeTreeData.fire();
     }
 
     disable() {
         DartL10nCodeLensProvider.enable = false
+        dartL10nCodeLensProvider.refreshCodeLenses();
         // show toast
         showInfo("Disable l10n helper")
         this.items = [];
